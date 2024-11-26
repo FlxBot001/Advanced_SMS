@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="teacher-dashboard">
+    <!-- Current Courses -->
+    <div class="courses-section">
+        <h2>Your Courses</h2>
+        <div class="courses-grid">
+            {% for course in current_courses %}
+            <div class="course-card">
+                <h3>{{ course.name }}</h3>
+                <p>Students: {{ course.student_count }}</p>
+                <p>Average Performance: {{ course.avg_performance|floatformat:1 }}%</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Recent Submissions -->
+    <div class="submissions-section">
+        <h2>Recent Submissions</h2>
+        <div class="submission-list">
+            {% for submission in recent_submissions %}
+            <div class="submission-item">
+                <p>{{ submission.student.user.get_full_name }} - {{ submission.assignment.title }}</p>
+                <p>Submitted: {{ submission.submission_date|date }}</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Attendance Summary -->
+    <div class="attendance-summary">
+        <h2>Today's Attendance</h2>
+        <div class="attendance-stats">
+            <p>Total Students: {{ attendance_summary.total_students }}</p>
+            <p>Present: {{ attendance_summary.present_students }}</p>
+            <p>Absence Rate: {{ attendance_summary.absence_rate|floatformat:1 }}%</p>
+        </div>
+    </div>
+
+    <!-- Upcoming Events -->
+    <div class="events-section">
+        <h2>Upcoming Events</h2>
+        <div class="events-list">
+            {% for event in upcoming_events %}
+            <div class="event-item">
+                <h4>{{ event.title }}</h4>
+                <p>{{ event.date|date }}</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %} 

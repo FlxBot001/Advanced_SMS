@@ -1,0 +1,62 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="student-dashboard">
+    <!-- Current Courses -->
+    <div class="courses-section">
+        <h2>Your Courses</h2>
+        <div class="courses-grid">
+            {% for course in current_courses %}
+            <div class="course-card">
+                <h3>{{ course.name }}</h3>
+                <p>Assignments: {{ course.assignments_count }}</p>
+                <p>Completed: {{ course.completed_assignments }}</p>
+                <div class="progress-bar">
+                    <div class="progress" style="width: {{ course.completed_assignments|divide:course.assignments_count|multiply:100 }}%"></div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Upcoming Assignments -->
+    <div class="assignments-section">
+        <h2>Upcoming Assignments</h2>
+        <div class="assignment-list">
+            {% for assignment in upcoming_assignments %}
+            <div class="assignment-item">
+                <h4>{{ assignment.title }}</h4>
+                <p>Due: {{ assignment.due_date|date }}</p>
+                <p>Course: {{ assignment.course.name }}</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Recent Grades -->
+    <div class="grades-section">
+        <h2>Recent Grades</h2>
+        <div class="grades-list">
+            {% for grade in recent_grades %}
+            <div class="grade-item">
+                <p>{{ grade.subject }}: {{ grade.score }}%</p>
+                <p>Date: {{ grade.date|date }}</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Attendance Record -->
+    <div class="attendance-section">
+        <h2>Attendance Record</h2>
+        <div class="attendance-calendar">
+            {% for record in attendance_record %}
+            <div class="attendance-day {% if record.is_present %}present{% else %}absent{% endif %}">
+                {{ record.date|date:"d" }}
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %} 

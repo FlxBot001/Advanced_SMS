@@ -1,0 +1,135 @@
+version: '3.8'
+
+services:
+  web:
+    build: .
+    command: gunicorn student_management_system.wsgi:application --bind 0.0.0.0:8000
+    volumes:
+      - .:/app
+      - static_volume:/app/static
+      - media_volume:/app/media
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+      - redis
+      - elasticsearch
+      - rabbitmq
+    environment:
+      - DATABASE_URL=postgresql://postgres:password@db:5432/student_management
+      - REDIS_URL=redis://redis:6379/0
+      - ELASTICSEARCH_URL=http://elasticsearch:9200
+      - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672/
+      - DJANGO_SETTINGS_MODULE=student_management_system.settings
+      - DJANGO_SECRET_KEY=${DJANGO_SECRET_KEY:-your_default_secret_key}
+      - DEBUG=${DEBUG:-False}
+    restart: unless-stopped
+
+  nginx:
+    image: nginx:alpine
+    volumes:
+      - ./nginx/conf.d:/etc/nginx/conf.d
+      - static_volume:/app/static
+      - media_volume:/app/media
+    ports:
+      - "80:80"
+      - "443:443"
+    depends_on:
+      - web
+    restart: unless-stopped
+
+  db:
+    image: postgres:13
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./backups:/backups
+    environment:
+      - POSTGRES_DB=student_management
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password
+    ports:
+      - "5432:5432"
+    restart: unless-stopped
+
+  redis:
+    image: redis:6.2
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes
+    restart: unless-stopped
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.14.0
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    volumes:
+      - elasticsearch_data:/usr/share/elasticsearch/data
+    ports:
+      - "9200:9200"
+    restart: unless-stopped
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    environment:
+      - RABBITMQ_DEFAULT_USER=guest
+      - RABBITMQ_DEFAULT_PASS=guest
+    ports:
+      - "5672:5672"  # AMQP protocol port
+      - "15672:15672"  # Management interface port
+    restart: unless-stopped
+
+  celery:
+    build: .
+    command: celery -A student_management_system worker -l info
+    volumes:
+      - .:/app
+    depends_on:
+      - web
+      - redis
+      - rabbitmq
+    environment:
+      - DATABASE_URL=postgresql://postgres:password@db:5432/student_management
+      - REDIS_URL=redis://redis:6379/0
+      - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672/
+    restart: unless-stopped
+
+  celery-beat:
+    build: .
+    command: celery -A student_management_system beat -l info
+    volumes:
+      - .:/app
+    depends_on:
+      - web
+      - redis
+      - rabbitmq
+    environment:
+      - DATABASE_URL=postgresql://postgres:password@db:5432/student_management
+      - REDIS_URL=redis://redis:6379/0
+      - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672/
+    restart: unless-stopped
+
+  flower:
+    build: .
+    command: celery -A student_management_system flower
+    ports:
+      - "5555:5555"
+    depends_on:
+      - celery
+    environment:
+      - CELERY_BROKER_URL=amqp://guest:guest@rabbitmq:5672/
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  redis_data:
+  elasticsearch_data:
+  rabbitmq_data:
+  static_volume:
+  media_volume:
+

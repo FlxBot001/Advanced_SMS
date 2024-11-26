@@ -1,0 +1,267 @@
+{% extends 'base.html' %}
+{% load static %}
+
+div class="message-filters mb-3">
+   <div class="btn-group">
+       <button class="btn btn-outline-primary" data-filter="all">All</button>
+       <button class="btn btn-outline-primary" data-filter="unread">Unread</button>
+       <button class="btn btn-outline-primary" data-filter="important">Important</button>
+   </div>
+   <div class="search-box float-end">
+       <input type="text" class="form-control" placeholder="Search messages..." id="messageSearch">
+   </div>
+/div>
+
+{% block content %}
+<div class="messages-container">
+    <div class="row">
+        <!-- Message Sidebar -->
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body">
+                    <button class="btn btn-primary w-100 mb-3" data-bs-toggle="modal" data-bs-target="#composeModal">
+                        <i class="fas fa-pen"></i> Compose
+                    </button>
+                    
+                    <div class="list-group">
+                        <a href="#inbox" class="list-group-item list-group-item-action active" data-bs-toggle="list">
+                            <i class="fas fa-inbox"></i> Inbox
+                            {% if inbox.unread.count %}
+                                <span class="badge bg-primary float-end">{{ inbox.unread.count }}</span>
+                            {% endif %}
+                        </a>
+                        <a href="#sent" class="list-group-item list-group-item-action" data-bs-toggle="list">
+                            <i class="fas fa-paper-plane"></i> Sent
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Message Content -->
+        <div class="col-md-9">
+            <div class="card">
+                <div class="card-body">
+                    <div class="message-filters mb-3">
+                        <div class="btn-group">
+                            <button class="btn btn-outline-primary" data-filter="all">All</button>
+                            <button class="btn btn-outline-primary" data-filter="unread">Unread</button>
+                            <button class="btn btn-outline-primary" data-filter="important">Important</button>
+                        </div>
+                        <div class="search-box float-end">
+                            <input type="text" class="form-control" placeholder="Search messages..." id="messageSearch">
+                        </div>
+                    </div>
+                    <div class="tab-content">
+                        <!-- Inbox -->
+                        <div class="tab-pane fade show active" id="inbox">
+                            <div class="message-list">
+                                {% for message in inbox %}
+                                    <div class="message-item {% if not message.read %}unread{% endif %}"
+                                         data-bs-toggle="modal" data-bs-target="#messageModal{{ message.id }}">
+                                        <div class="sender">{{ message.sender.get_full_name }}</div>
+                                        <div class="subject">{{ message.subject }}</div>
+                                        <div class="date">{{ message.created_at|date }}</div>
+                                        <div class="message-actions">
+                                            <button class="btn btn-sm btn-outline-danger delete-message" title="Delete">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-warning mark-important" title="Mark Important">
+                                                <i class="fas fa-star"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                {% empty %}
+                                    <p class="text-center text-muted">No messages in inbox</p>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <!-- Sent Messages -->
+                        <div class="tab-pane fade" id="sent">
+                            <div class="message-list">
+                                {% for message in sent %}
+                                    <div class="message-item">
+                                        <div class="recipient">To: {{ message.recipient.get_full_name }}</div>
+                                        <div class="subject">{{ message.subject }}</div>
+                                        <div class="date">{{ message.created_at|date }}</div>
+                                    </div>
+                                {% empty %}
+                                    <p class="text-center text-muted">No sent messages</p>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Compose Message Modal -->
+<div class="modal fade" id="composeModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Compose Message</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="composeForm" method="post" action="{% url 'send_message' %}">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="recipient" class="form-label">To:</label>
+                        <select class="form-select" id="recipient" name="recipient" required>
+                            <option value="">Select recipient...</option>
+                            {% for user in users %}
+                                <option value="{{ user.id }}">{{ user.get_full_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="subject" class="form-label">Subject:</label>
+                        <input type="text" class="form-control" id="subject" name="subject" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="content" class="form-label">Message:</label>
+                        <textarea class="form-control" id="content" name="content" rows="5" required></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="submit" form="composeForm" class="btn btn-primary">Send</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Message View Modals -->
+{% for message in inbox %}
+<div class="modal fade" id="messageModal{{ message.id }}" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">{{ message.subject }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p><strong>From:</strong> {{ message.sender.get_full_name }}</p>
+                <p><strong>Date:</strong> {{ message.created_at|date:"F d, Y H:i" }}</p>
+                <hr>
+                <div class="message-content">
+                    {{ message.content|linebreaks }}
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" onclick="replyToMessage({{ message.id }})">Reply</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add to message items -->
+div class="message-actions">
+   <button class="btn btn-sm btn-outline-danger delete-message" title="Delete">
+       <i class="fas fa-trash"></i>
+   </button>
+   <button class="btn btn-sm btn-outline-warning mark-important" title="Mark Important">
+       <i class="fas fa-star"></i>
+   </button>
+/div>
+
+
+{% endfor %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function replyToMessage(messageId) {
+    fetch(`/messages/${messageId}/`)
+        .then(response => response.json())
+        .then(data => {
+            $('#recipient').val(data.sender_id);
+            $('#subject').val(`Re: ${data.subject}`);
+            $('#content').val(`\n\nOn ${data.date}, ${data.sender_name} wrote:\n> ${data.content}`);
+    $('#composeModal').modal('show');
+        });
+}
+
+// Message search functionality
+$('#messageSearch').on('input', function() {
+    const searchTerm = $(this).val().toLowerCase();
+    $('.message-item').each(function() {
+        const text = $(this).text().toLowerCase();
+        $(this).toggle(text.includes(searchTerm));
+    });
+});
+
+// Message filters
+$('.message-filters .btn').click(function() {
+    const filter = $(this).data('filter');
+    $('.message-filters .btn').removeClass('active');
+    $(this).addClass('active');
+    
+    $('.message-item').show();
+    if (filter === 'unread') {
+        $('.message-item:not(.unread)').hide();
+    } else if (filter === 'important') {
+        $('.message-item:not(.important)').hide();
+    }
+});
+
+// Mark message as read when opened
+$('.message-item').click(function() {
+    const messageId = $(this).data('message-id');
+    if ($(this).hasClass('unread')) {
+        fetch(`/messages/${messageId}/read/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}'
+            }
+        }).then(() => {
+            $(this).removeClass('unread');
+            updateUnreadCount();
+        });
+    }
+});
+
+function updateUnreadCount() {
+    const count = $('.message-item.unread').length;
+    $('.unread-count').text(count || '');
+}
+
+// Delete message
+$('.delete-message').click(function(e) {
+    e.stopPropagation();
+    const messageId = $(this).closest('.message-item').data('message-id');
+    if (confirm('Are you sure you want to delete this message?')) {
+        fetch(`/messages/${messageId}/delete/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}'
+            }
+        }).then(() => {
+            $(this).closest('.message-item').remove();
+        });
+    }
+});
+
+// Mark message as important
+$('.mark-important').click(function(e) {
+    e.stopPropagation();
+    const $messageItem = $(this).closest('.message-item');
+    const messageId = $messageItem.data('message-id');
+    fetch(`/messages/${messageId}/important/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}'
+        }
+    }).then(() => {
+        $messageItem.toggleClass('important');
+        $(this).toggleClass('active');
+    });
+});
+</script>
+{% endblock %} 

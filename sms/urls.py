@@ -34,5 +34,9 @@ urlpatterns = [
     path('api/', include(router.urls)),
     path('api/auth/', include('rest_framework.urls', namespace='rest_framework')),
     path('clearance/', include('clearance.urls')),
+    path('profile/', views.profile, name='profile'),
+    path('settings/', views.settings, name='settings'),
+    path('calendar/', views.calendar, name='calendar'),
+    path('messages/', views.messages, name='messages'),
 
 ]

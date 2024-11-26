@@ -13,6 +13,7 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 from pathlib import Path
 import os
 import datetime
+from celery.schedules import crontab
 
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -59,8 +60,17 @@ INSTALLED_APPS = [
     'ml_ops',
     'notification',
     'reports',
+    'events',
+    'behavior',
+    'cocurricular',
+    'dashboard',
     # 'guardian',
 ]
+
+# additional settings
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
+
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -166,6 +176,8 @@ REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticated',
     ],
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'PAGE_SIZE': 10,
 }
 
 JWT_AUTH = {
@@ -200,6 +212,11 @@ CELERY_BEAT_SCHEDULE = {
         'schedule': 3600.0,  # Every hour
     },
 }
+
+# Voice Processing Settings
+VOICE_UPLOAD_PATH = os.path.join(settings.MEDIA_ROOT, 'voice_inputs')
+ALLOWED_AUDIO_TYPES = ['audio/wav', 'audio/mp3', 'audio/ogg']
+MAX_AUDIO_SIZE = 10 * 1024 * 1024  # 10MB
 
 # Authentication backends
 AUTHENTICATION_BACKENDS = (

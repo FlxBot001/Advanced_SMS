@@ -1,0 +1,114 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="dashboard-container">
+    <!-- Overview Statistics -->
+    <div class="stats-overview">
+        <div class="stat-card">
+            <h3>Total Students</h3>
+            <p>{{ total_students }}</p>
+        </div>
+        <div class="stat-card">
+            <h3>Total Teachers</h3>
+            <p>{{ total_teachers }}</p>
+        </div>
+        <div class="stat-card">
+            <h3>Total Courses</h3>
+            <p>{{ total_courses }}</p>
+        </div>
+    </div>
+
+    <!-- Recent Activity -->
+    <div class="recent-activity">
+        <h2>Recent Activity</h2>
+        <div class="activity-grid">
+            <!-- Recent Students -->
+            <div class="activity-section">
+                <h3>New Students</h3>
+                <ul>
+                    {% for student in recent_students %}
+                    <li>{{ student.user.get_full_name }} - {{ student.created_at|date }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+
+            <!-- Recent Teachers -->
+            <div class="activity-section">
+                <h3>New Teachers</h3>
+                <ul>
+                    {% for teacher in recent_teachers %}
+                    <li>{{ teacher.user.get_full_name }} - {{ teacher.created_at|date }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+
+            <!-- Recent Courses -->
+            <div class="activity-section">
+                <h3>New Courses</h3>
+                <ul>
+                    {% for course in recent_courses %}
+                    <li>{{ course.name }} - {{ course.created_at|date }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Analytics Section -->
+    <div class="analytics-section">
+        <h2>Analytics</h2>
+        <div class="charts-grid">
+            <!-- Grade Distribution Chart -->
+            <div class="chart-container">
+                <canvas id="gradeDistributionChart"></canvas>
+            </div>
+            
+            <!-- Subject Distribution Chart -->
+            <div class="chart-container">
+                <canvas id="subjectDistributionChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Grade Distribution Chart
+    const gradeData = {{ student_grade_distribution|safe }};
+    new Chart(document.getElementById('gradeDistributionChart'), {
+        type: 'bar',
+        data: {
+            labels: gradeData.map(item => item.grade),
+            datasets: [{
+                label: 'Students per Grade',
+                data: gradeData.map(item => item.count),
+                backgroundColor: 'rgba(54, 162, 235, 0.5)'
+            }]
+        }
+    });
+
+    // Subject Distribution Chart
+    const subjectData = {{ teacher_subject_distribution|safe }};
+    new Chart(document.getElementById('subjectDistributionChart'), {
+        type: 'pie',
+        data: {
+            labels: subjectData.map(item => item.subject),
+            datasets: [{
+                data: subjectData.map(item => item.count),
+                backgroundColor: [
+                    'rgba(255, 99, 132, 0.5)',
+                    'rgba(54, 162, 235, 0.5)',
+                    'rgba(255, 206, 86, 0.5)',
+                    'rgba(75, 192, 192, 0.5)',
+                    'rgba(153, 102, 255, 0.5)'
+                ]
+            }]
+        }
+    });
+</script>
+{% endblock %}
+

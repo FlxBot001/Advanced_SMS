@@ -1,0 +1,69 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="profile-container">
+    <div class="profile-header">
+        <div class="profile-avatar">
+            {% if user_profile.profile_image %}
+                <img src="{{ user_profile.profile_image.url }}" alt="Profile Image">
+            {% else %}
+                <i class="fas fa-user-circle fa-5x"></i>
+            {% endif %}
+        </div>
+        <div class="profile-info">
+            <h2>{{ user_profile.get_full_name }}</h2>
+            <p class="text-muted">
+                {% if user.teacher %}Teacher
+                {% elif user.student %}Student
+                {% elif user.is_staff %}Administrator
+                {% endif %}
+            </p>
+        </div>
+    </div>
+
+    <div class="profile-content">
+        <div class="row">
+            <!-- Personal Information -->
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Personal Information</h3>
+                    </div>
+                    <div class="card-body">
+                        <p><strong>Email:</strong> {{ user_profile.email }}</p>
+                        <p><strong>Joined:</strong> {{ user_profile.date_joined|date }}</p>
+                        {% if user.student %}
+                            <p><strong>Grade:</strong> {{ user.student.grade }}</p>
+                        {% endif %}
+                        {% if user.teacher %}
+                            <p><strong>Subject:</strong> {{ user.teacher.subject }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Activities -->
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Recent Activities</h3>
+                    </div>
+                    <div class="card-body">
+                        <ul class="activity-list">
+                            {% for activity in recent_activities %}
+                                <li class="activity-item">
+                                    {{ activity }}
+                                    <small class="text-muted">{{ activity.created_at|timesince }} ago</small>
+                                </li>
+                            {% empty %}
+                                <li>No recent activities</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 
